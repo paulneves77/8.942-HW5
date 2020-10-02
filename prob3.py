@@ -48,10 +48,8 @@ def ion_z_eq_full(obh2, z):
     a = z_to_a(z)
     T = a_to_T(a)
     omh2 = 0.143
-    1-123*T_to_Xe(T)*(obh2/0.022)*(0.14/omh2)**(1/2)*((1+z)/1000)**(3/2)*(1+(1+z)*0.14/(3360*omh2))**(-1/2)
-    
-    
-    
+    return 1-123*T_to_Xe(T)*(obh2/0.022)*(0.14/omh2)**(1/2)*((1+z)/1000)**(3/2)*(1+(1+z)*0.14/(3360*omh2))**(-1/2)
+
 
 # define some constants
 T_CMB = (2.725 * u.K * const.k_B).to(u.eV)
@@ -64,36 +62,27 @@ dE = 13.6
 fig, ax = plt.subplots()
 z_list = np.flip(np.logspace(4, 2, 1000))
 X_e = T_to_Xe(a_to_T(z_to_a(z_list)))
-X_e = X_e / X_e[-1]
+#X_e = X_e / X_e[-1]
 plt.loglog(z_list, X_e, 'k-')
 #plt.title('Problem 1(a)')
 plt.xlabel('z')
 plt.ylabel('$X_e$')
-#ax.xaxis.set_major_locator(ticker.LogLocator(numticks=4))
-#ax.xaxis.set_minor_locator(ticker.LogLocator(numticks=10))
-#ax.yaxis.set_major_locator(ticker.LogLocator(numticks=4))
-#ax.yaxis.set_minor_locator(ticker.LogLocator(numticks=15))
 plt.ylim([1e-4,1.2])
 plt.gca().invert_xaxis()
 
 
 # plot z recombine vs omega_b*h^2
 obh2_list = np.linspace(0.01, 0.05, 100)
-z_recombine = obh2_list
+z_recombine = np.zeros(len(obh2_list))
 for ind in range(len(obh2_list)):
     obh2 = obh2_list[ind]
     ion_z_eq = partial(ion_z_eq_full, obh2)
-    this_root = root_scalar(ion_z_eq, x0=1e3)
+    this_root = root_scalar(ion_z_eq, x0=1110, x1=1e3)
     z_recombine[ind] = this_root.root
     
 fig, ax = plt.subplots()
-plt.loglog(obh2_list, z_recombine, 'k-')
+plt.plot(obh2_list, z_recombine, 'k-')
 #plt.title('Problem 1(a)')
 plt.xlabel('$\\Omega_b h^2$')
 plt.ylabel('$z_{recombine}$')
-#ax.xaxis.set_major_locator(ticker.LogLocator(numticks=4))
-#ax.xaxis.set_minor_locator(ticker.LogLocator(numticks=10))
-#ax.yaxis.set_major_locator(ticker.LogLocator(numticks=4))
-#ax.yaxis.set_minor_locator(ticker.LogLocator(numticks=15))
-#plt.ylim([1e-4,1.2])
-plt.gca().invert_xaxis()
+#plt.xlim([1e-2,5e-2])
