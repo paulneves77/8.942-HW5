@@ -37,7 +37,7 @@ def ionization_fract_eq(T):
     dE = 13.6
     m_e = 511e3
     factor = np.multiply(np.reciprocal(baryon_density(T)), np.multiply(np.power(m_e*T/2/np.pi, 3/2), np.exp(-np.divide(dE, T))))
-    return 0.5*(factor - np.sqrt(np.power(factor, 2) + 4 * factor))
+    return 0.5*(np.sqrt(np.power(factor, 2) + 4 * factor) - factor)
 
 
 def ion_z_eq_test(z):
@@ -56,13 +56,16 @@ def ion_z_eq_test(z):
 # define some constants
 T_CMB = (2.725 * u.K * const.k_B).to(u.eV)
 print(f"CMB temp today = {T_CMB}")
+m_e = 511e3
+dE = 13.6
 
 
 # test plot
 fig, ax = plt.subplots()
 z_list = np.flip(np.logspace(4, 2, 1000))
 X_e = ionization_fract_eq(a_to_T(z_to_a(z_list)))
-plt.loglog(z_list, ionization_fract_eq(a_to_T(z_to_a(z_list))), 'k-')
+X_e = X_e / X_e[-1]
+plt.loglog(z_list, X_e, 'k-')
 #plt.title('Problem 1(a)')
 plt.xlabel('z')
 plt.ylabel('$X_e$')
@@ -70,4 +73,26 @@ plt.ylabel('$X_e$')
 #ax.xaxis.set_minor_locator(ticker.LogLocator(numticks=10))
 #ax.yaxis.set_major_locator(ticker.LogLocator(numticks=4))
 #ax.yaxis.set_minor_locator(ticker.LogLocator(numticks=15))
+plt.ylim([1e-4,1.2])
+plt.gca().invert_xaxis()
+
+
+fig, ax = plt.subplots()
+T = a_to_T(z_to_a(z_list))
+plt.loglog(z_list, T, 'k-')
+plt.gca().invert_xaxis()
+
+fig, ax = plt.subplots()
+y=np.power(m_e*T/2/np.pi, 3/2)
+plt.loglog(z_list, y, 'k-')
+plt.gca().invert_xaxis()
+
+fig, ax = plt.subplots()
+y = np.reciprocal(baryon_density(T))
+plt.loglog(z_list, y, 'k-')
+plt.gca().invert_xaxis()
+
+fig, ax = plt.subplots()
+y=np.exp(-np.divide(dE, T))
+plt.loglog(z_list, y, 'k-')
 plt.gca().invert_xaxis()
