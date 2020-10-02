@@ -8,6 +8,7 @@ from astropy import units as u
 
 import numpy as np
 from scipy.optimize import root_scalar
+from functools import partial
 
 # formatting for matplotlib
 import matplotlib.pyplot as plt
@@ -32,7 +33,7 @@ def baryon_density(T):
     return 1e-9 * np.power(T, 3)
 
 
-def ionization_fract_eq(T):
+def T_to_Xe(T):
     """calculates ionization fraction from temperature using Saha eq"""
     dE = 13.6
     m_e = 511e3
@@ -40,15 +41,14 @@ def ionization_fract_eq(T):
     return 0.5*(np.sqrt(np.power(factor, 2) + 4 * factor) - factor)
 
 
-def ion_z_eq_test(z):
+def ion_z_eq_full(obh2, z):
     """returns ionization fraction at given redshift
     
     tests whether all the math is working by reproducing plot in textbook"""
     a = z_to_a(z)
     T = a_to_T(a)
-    omega_b_h2 = 0.0222
-    omega_m_h2 = 0.143
-    return 1 - 123*ionization_fract_eq(T)
+    omh2 = 0.143
+    1-123*T_to_Xe(T)*(obh2/0.022)*(0.14/omh2)**(1/2)*((1+z)/1000)**(3/2)*(1+(1+z)*0.14/(3360*omh2))**(-1/2)
     
     
     
@@ -63,7 +63,7 @@ dE = 13.6
 # test plot
 fig, ax = plt.subplots()
 z_list = np.flip(np.logspace(4, 2, 1000))
-X_e = ionization_fract_eq(a_to_T(z_to_a(z_list)))
+X_e = T_to_Xe(a_to_T(z_to_a(z_list)))
 X_e = X_e / X_e[-1]
 plt.loglog(z_list, X_e, 'k-')
 #plt.title('Problem 1(a)')
@@ -77,22 +77,23 @@ plt.ylim([1e-4,1.2])
 plt.gca().invert_xaxis()
 
 
+# plot z recombine vs omega_b*h^2
+obh2_list = np.linspace(0.01, 0.05, 100)
+z_recombine = obh2_list
+for ind in range(len(obh2_list)):
+    obh2 = obh2_list[ind]
+    ion_z_eq = partial(ion_z_eq_full, obh2)
+    this_root = root_scalar(ion_z_eq, x0=1e3)
+    z_recombine[ind] = this_root.root
+    
 fig, ax = plt.subplots()
-T = a_to_T(z_to_a(z_list))
-plt.loglog(z_list, T, 'k-')
-plt.gca().invert_xaxis()
-
-fig, ax = plt.subplots()
-y=np.power(m_e*T/2/np.pi, 3/2)
-plt.loglog(z_list, y, 'k-')
-plt.gca().invert_xaxis()
-
-fig, ax = plt.subplots()
-y = np.reciprocal(baryon_density(T))
-plt.loglog(z_list, y, 'k-')
-plt.gca().invert_xaxis()
-
-fig, ax = plt.subplots()
-y=np.exp(-np.divide(dE, T))
-plt.loglog(z_list, y, 'k-')
+plt.loglog(obh2_list, z_recombine, 'k-')
+#plt.title('Problem 1(a)')
+plt.xlabel('$\\Omega_b h^2$')
+plt.ylabel('$z_{recombine}$')
+#ax.xaxis.set_major_locator(ticker.LogLocator(numticks=4))
+#ax.xaxis.set_minor_locator(ticker.LogLocator(numticks=10))
+#ax.yaxis.set_major_locator(ticker.LogLocator(numticks=4))
+#ax.yaxis.set_minor_locator(ticker.LogLocator(numticks=15))
+#plt.ylim([1e-4,1.2])
 plt.gca().invert_xaxis()
